@@ -1022,7 +1022,11 @@ footer{background:var(--deep);color:rgba(255,255,255,.62);padding:3rem 2rem 1.5r
             <div><div style="font-weight:700;font-size:.85rem" id="loadedName"></div><div style="font-size:.75rem;color:var(--muted)" id="loadedInfo"></div></div>
           </div>
         </div>
-        <div class="admin-notice"><strong>📋 Formato esperado</strong>Columnas: <strong>Torre · Apartamento · Propietario · Concepto · Período · Vencimiento · Valor</strong>. Los datos quedan disponibles de inmediato para consulta de residentes.</div>
+        <div class="admin-notice">
+          <strong>📋 Archivo requerido: CSV (.csv)</strong>
+          Usa el archivo <strong>Cartera_VillaSerena_[fecha].csv</strong> que te genera Claude. Columnas: Torre · Apartamento · Propietario · Concepto · Período · Vencimiento · Valor (COP) · Estado.<br><br>
+          ⚠️ <strong>No subas el .xlsx</strong> — el portal solo lee archivos CSV. Si tienes el Excel, pídele a Claude que lo convierta al formato correcto.
+        </div>
       </div>
 
       <!-- CONJUNTO -->
@@ -1203,14 +1207,23 @@ async function guardarCartera(rows){
 async function cargarCartera(){
   try{
     const meta = await db.collection('config').doc('cartera_meta').get();
-    if(!meta.exists) return;
-    const {chunks} = meta.data();
+    if(!meta.exists){ console.log('No hay cartera en Firebase todavía'); return; }
+    const {chunks, totalRows} = meta.data();
     let rows = [];
     for(let i=0;i<chunks;i++){
       const snap = await db.collection('config').doc(`cartera_chunk_${i}`).get();
       if(snap.exists) rows = rows.concat(snap.data().rows||[]);
     }
     DB.carteraRows = rows;
+    // Update admin UI if visible
+    const li=document.getElementById('loadedInfo');
+    const ld=document.getElementById('adminLoaded');
+    const ln=document.getElementById('loadedName');
+    if(rows.length>0){
+      if(ld) ld.classList.add('vis');
+      if(ln) ln.textContent = DB.excelName || 'Cartera cargada desde la nube';
+      if(li) li.textContent = `${rows.length} registros disponibles — datos en la nube ☁️`;
+    }
     console.log(`✅ Cartera cargada: ${rows.length} registros`);
   } catch(err){ console.warn('No hay cartera en Firebase:', err); }
 }
@@ -1298,55 +1311,125 @@ function saveConfig(){
 // EXCEL
 function handleExcel(e){
   const file=e.target.files[0]; if(!file) return;
+
+  // Show loading state
+  const ld=document.getElementById('adminLoaded');
+  const ln=document.getElementById('loadedName');
+  const li=document.getElementById('loadedInfo');
+  if(ln) ln.textContent = file.name + ' — leyendo...';
+  if(ld) ld.classList.add('vis');
+
   const reader=new FileReader();
   reader.onload=function(ev){
     try{
-      // Parse CSV or use raw text for simple matching
-      const text=ev.target.result;
-      const lines=text.split(/\r?\n/).filter(l=>l.trim());
-      DB.carteraRows=[];
-      // Detect separator
-      const sep=lines[0].includes(';')?';':',';
-      const headers=lines[0].split(sep).map(h=>h.trim().replace(/"/g,'').toLowerCase());
-      // Find column indices
-      const ci={
-        torre: headers.findIndex(h=>h.includes('torre')),
-        apto:  headers.findIndex(h=>h.includes('apto')||h.includes('apart')||h.includes('unidad')),
-        prop:  headers.findIndex(h=>h.includes('prop')||h.includes('nombre')||h.includes('resid')),
-        conc:  headers.findIndex(h=>h.includes('conc')||h.includes('descrip')),
-        per:   headers.findIndex(h=>h.includes('per')||h.includes('mes')),
-        venc:  headers.findIndex(h=>h.includes('venc')||h.includes('fecha')),
-        val:   headers.findIndex(h=>h.includes('val')||h.includes('monto')||h.includes('saldo')||h.includes('deuda')),
-      };
-      for(let i=1;i<lines.length;i++){
-        const cols=lines[i].split(sep).map(c=>c.trim().replace(/"/g,''));
-        if(cols.length<3) continue;
-        const row={
-          torre: ci.torre>=0?cols[ci.torre]:'',
-          apto:  ci.apto>=0?cols[ci.apto]:'',
-          prop:  ci.prop>=0?cols[ci.prop]:'Residente',
-          conc:  ci.conc>=0?cols[ci.conc]:'Cuota administración',
-          per:   ci.per>=0?cols[ci.per]:'',
-          venc:  ci.venc>=0?cols[ci.venc]:'—',
-          val:   ci.val>=0?parseFloat(cols[ci.val].replace(/[^0-9.]/g,''))||0:0,
-        };
-        if(row.torre||row.apto) DB.carteraRows.push(row);
+      const text = ev.target.result;
+      const lines = text.split(/\r?\n/);
+
+      // ── Find the header row (contains 'Torre' or 'torre') ───────────
+      let headerIdx = -1;
+      for(let i=0;i<Math.min(lines.length,10);i++){
+        const l = lines[i].toLowerCase();
+        if(l.includes('torre') && (l.includes('apto') || l.includes('apart') || l.includes('unidad') || l.includes('propiet'))){
+          headerIdx = i; break;
+        }
       }
-      DB.excelName=file.name;
-      DB.excelDate=new Date().toLocaleString('es-CO');
-      DB.excelRows=DB.carteraRows.length;
+      if(headerIdx < 0){
+        showToast('⚠️ Formato no reconocido','El archivo debe tener columnas: Torre, Apartamento, Propietario, Concepto, Período, Vencimiento, Valor, Estado');
+        if(li) li.textContent = 'Error: encabezados no encontrados';
+        return;
+      }
+
+      // ── Detect separator ─────────────────────────────────────────────
+      const sep = lines[headerIdx].includes(';') ? ';' : ',';
+
+      // ── Parse headers ────────────────────────────────────────────────
+      const parseRow = (line) => {
+        // Handle quoted fields
+        const result = []; let cur=''; let inQ=false;
+        for(let i=0;i<line.length;i++){
+          const ch=line[i];
+          if(ch==='"'){ inQ=!inQ; continue; }
+          if(ch===sep && !inQ){ result.push(cur.trim()); cur=''; continue; }
+          cur+=ch;
+        }
+        result.push(cur.trim());
+        return result;
+      };
+
+      const headers = parseRow(lines[headerIdx]).map(h=>h.replace(/"/g,'').toLowerCase().trim());
+
+      // ── Find column indices — match our exact CSV format ─────────────
+      const ci = {
+        torre: headers.findIndex(h=>h.includes('torre')),
+        apto:  headers.findIndex(h=>h.includes('apto') || h.includes('apart') || h.includes('unidad')),
+        prop:  headers.findIndex(h=>h.includes('prop') || h.includes('resid') || h.includes('nombre') || h.includes('cliente')),
+        conc:  headers.findIndex(h=>h.includes('conc') || h.includes('descrip') || h.includes('detalle')),
+        per:   headers.findIndex(h=>h.includes('per') || h.includes('mes') || h.includes('período') || h.includes('periodo')),
+        venc:  headers.findIndex(h=>h.includes('venc') || h.includes('fecha')),
+        val:   headers.findIndex(h=>h.includes('valor') || h.includes('monto') || h.includes('saldo') || h.includes('deuda') || h.includes('total')),
+        est:   headers.findIndex(h=>h.includes('estado')),
+      };
+
+      // ── Parse data rows ───────────────────────────────────────────────
+      DB.carteraRows = [];
+      let skipped = 0;
+
+      for(let i=headerIdx+1; i<lines.length; i++){
+        const line = lines[i];
+        if(!line.trim()) continue;
+        const cols = parseRow(line);
+        if(cols.length < 3){ skipped++; continue; }
+
+        const torre = ci.torre>=0 ? cols[ci.torre].replace(/"/g,'').trim() : '';
+        const apto  = ci.apto>=0  ? cols[ci.apto].replace(/"/g,'').trim()  : '';
+
+        if(!torre && !apto){ skipped++; continue; }
+
+        // Skip total rows
+        if(torre.toLowerCase().includes('total') || apto.toLowerCase().includes('total')){
+          skipped++; continue;
+        }
+
+        const valRaw = ci.val>=0 ? cols[ci.val].replace(/[^0-9.\-]/g,'') : '0';
+        const val = parseFloat(valRaw) || 0;
+
+        DB.carteraRows.push({
+          torre: torre,
+          apto:  apto,
+          prop:  ci.prop>=0 ? cols[ci.prop].replace(/"/g,'').trim() : 'Residente',
+          conc:  ci.conc>=0 ? cols[ci.conc].replace(/"/g,'').trim() : 'Cuota administración',
+          per:   ci.per>=0  ? cols[ci.per].replace(/"/g,'').trim()  : '—',
+          venc:  ci.venc>=0 ? cols[ci.venc].replace(/"/g,'').trim() : '—',
+          val:   val,
+          est:   ci.est>=0  ? cols[ci.est].replace(/"/g,'').trim()  : (val>0?'EN MORA':'AL DÍA'),
+        });
+      }
+
+      if(DB.carteraRows.length === 0){
+        showToast('⚠️ Sin datos','No se encontraron registros válidos. Verifica que el archivo sea CSV.');
+        if(li) li.textContent = `0 registros — revisa el formato`;
+        return;
+      }
+
+      // ── Save to Firebase ─────────────────────────────────────────────
+      DB.excelName  = file.name;
+      DB.excelDate  = new Date().toLocaleString('es-CO');
+      DB.excelRows  = DB.carteraRows.length;
+
+      if(ld){ ld.classList.add('vis'); }
+      if(ln) ln.textContent = file.name;
+      if(li) li.textContent = `Cargado: ${DB.excelDate} · ${DB.carteraRows.length} registros encontrados`;
+
       guardarCartera(DB.carteraRows);
-      const ld=document.getElementById('adminLoaded');
-      const ln=document.getElementById('loadedName');
-      const li=document.getElementById('loadedInfo');
-      if(ld){ld.classList.add('vis');if(ln)ln.textContent=file.name;if(li)li.textContent=`Cargado: ${DB.excelDate} · ${DB.carteraRows.length} registros encontrados`;}
-      showToast('📊 Cartera cargada',`${DB.carteraRows.length} apartamentos disponibles para consulta.`);
+
     }catch(err){
-      showToast('❌ Error al leer el archivo','Verifica que sea CSV o guárdalo como CSV desde Excel.');
-      console.error(err);
+      console.error('Error leyendo archivo:', err);
+      showToast('❌ Error al leer el archivo','Guárdalo como CSV UTF-8 desde Excel y vuelve a intentarlo.');
+      const li2=document.getElementById('loadedInfo');
+      if(li2) li2.textContent = 'Error: ' + err.message;
     }
   };
-  reader.readAsText(file,'UTF-8');
+  reader.readAsText(file, 'UTF-8');
 }
 
 // CARTERA DEMO
@@ -1364,12 +1447,13 @@ function consultarCartera(){
 
   // ── Buscar en datos del Excel cargado por el admin ──
   if(DB.carteraRows && DB.carteraRows.length>0){
-    const torNorm=tor.replace('Torre ','').trim().toUpperCase();
-    const aptNorm=apt.trim();
+    // Normalize: strip "Torre " prefix, uppercase, trim
+    const torNorm = tor.replace(/^Torre\s*/i,'').trim().toUpperCase();
+    const aptNorm = apt.trim().replace(/^0+/,''); // remove leading zeros
     const rows=DB.carteraRows.filter(r=>{
-      const rt=(r.torre||'').replace('Torre ','').trim().toUpperCase();
-      const ra=(r.apto||'').trim();
-      return (rt===torNorm||rt===tor.toUpperCase()) && (ra===aptNorm||ra===apt);
+      const rt = (r.torre||'').replace(/^Torre\s*/i,'').trim().toUpperCase();
+      const ra = (r.apto||'').trim().replace(/^0+/,'');
+      return rt===torNorm && ra===aptNorm;
     });
     if(rows.length>0){
       found=true;
