@@ -135,6 +135,15 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(26,43,40,.9
 .tarifa-val{font-weight:800;font-size:.92rem;color:#fff;font-family:'Playfair Display',serif;}
 .tarifa-row.active .tarifa-val{color:var(--gold-light);}
 .tarifa-row.active .tarifa-lbl{color:rgba(255,255,255,.88);}
+
+.com-attachment{display:inline-flex;align-items:center;gap:6px;margin-top:.75rem;background:var(--teal-pale);border:1px solid rgba(42,122,107,.25);border-radius:7px;padding:.4rem .85rem;font-size:.75rem;font-weight:600;color:var(--teal-dark);text-decoration:none;cursor:pointer;transition:all .2s;}
+.com-attachment:hover{background:#C8E6E0;border-color:var(--teal);}
+.com-attachment svg{flex-shrink:0;}
+.admin-file-attach{border:2px dashed rgba(42,122,107,.3);border-radius:8px;padding:1rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--teal-pale);margin-top:.5rem;}
+.admin-file-attach:hover{border-color:var(--teal);background:#DDF0EB;}
+.admin-file-attach input{display:none;}
+.attach-preview{display:none;background:var(--teal-pale);border:1px solid rgba(42,122,107,.25);border-radius:7px;padding:.6rem .9rem;margin-top:.5rem;font-size:.8rem;color:var(--teal-dark);align-items:center;gap:8px;}
+.attach-preview.vis{display:flex;}
 .comprobante-box{background:rgba(42,122,107,.1);border:1px solid rgba(42,122,107,.3);border-radius:10px;padding:1rem 1.2rem;margin-top:1rem;display:flex;align-items:flex-start;gap:10px;}
 .comprobante-box .ci{font-size:1.3rem;}
 .comprobante-txt{font-size:.78rem;color:rgba(255,255,255,.6);line-height:1.65;}
@@ -1003,6 +1012,23 @@ footer{background:var(--deep);color:rgba(255,255,255,.62);padding:3rem 2rem 1.5r
           <div class="form-group full"><label>Contenido</label><textarea id="aCuerpo" placeholder="Describe el comunicado en detalle..."></textarea></div>
           <div class="form-group"><label>Autor / Área</label><input type="text" id="aAutor" placeholder="Ej: Administración"></div>
           <div class="form-group" style="align-items:flex-end"><button class="btn-add" style="width:100%" onclick="addComunicado()">+ Publicar en Muro</button></div>
+          <div class="form-group full">
+            <label>Documento adjunto <span style="color:var(--muted);font-weight:400">(opcional — PDF, imagen, Word)</span></label>
+            <div class="admin-file-attach" onclick="document.getElementById('aDocInput').click()">
+              <input type="file" id="aDocInput" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls" onchange="previewDoc(event)">
+              <div style="font-size:1.4rem;margin-bottom:.3rem">📎</div>
+              <div style="font-size:.8rem;color:var(--teal-dark);font-weight:600">Clic para adjuntar documento</div>
+              <div style="font-size:.72rem;color:var(--muted)">PDF · Word · Excel · Imagen · Máx. 5 MB</div>
+            </div>
+            <div class="attach-preview" id="attachPreview">
+              <span style="font-size:1.2rem" id="attachIcon">📄</span>
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:.82rem" id="attachName"></div>
+                <div style="font-size:.72rem;color:var(--muted)" id="attachSize"></div>
+              </div>
+              <button onclick="clearDoc()" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:.8rem;font-weight:700">✕ Quitar</button>
+            </div>
+          </div>
         </div>
         <div style="font-weight:700;margin:1.4rem 0 .7rem;font-size:.88rem">Comunicados activos <span id="comCount" style="color:var(--muted);font-weight:400"></span></div>
         <ul class="saved-list" id="comList"></ul>
@@ -1255,10 +1281,48 @@ function renderMuro(){
   const tm={urg:{cls:'t-urg',lbl:'Urgente',cc:'urg'},inf:{cls:'t-inf',lbl:'Informativo',cc:'inf'},nor:{cls:'t-nor',lbl:'Aviso',cc:'nor'}};
   g.innerHTML=DB.comunicados.map(c=>{
     const t=tm[c.tipo]||tm.nor;
-    return `<div class="com-card ${t.cc}"><span class="com-tag ${t.cls}">${t.lbl}</span><div class="com-title">${c.titulo}</div><div class="com-body">${c.cuerpo}</div><div class="com-date">📅 ${c.fecha} · ${c.autor}</div></div>`;
+    const adjunto = c.docUrl ? `
+      <a href="${c.docUrl}" target="_blank" download="${c.docName||'documento'}" class="com-attachment">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        ${c.docName||'Ver documento adjunto'}
+      </a>` : '';
+    return `<div class="com-card ${t.cc}"><span class="com-tag ${t.cls}">${t.lbl}</span><div class="com-title">${c.titulo}</div><div class="com-body">${c.cuerpo}</div>${adjunto}<div class="com-date">📅 ${c.fecha} · ${c.autor}</div></div>`;
   }).join('');
 }
-function addComunicado(){
+// Doc attachment state
+let _docFile = null;
+let _docB64  = null;
+
+function previewDoc(e){
+  const file = e.target.files[0]; if(!file) return;
+  if(file.size > 5*1024*1024){ showToast('⚠️ Archivo muy grande','Máximo 5 MB.'); return; }
+  _docFile = file;
+  // Read as base64 to store in Firebase
+  const reader = new FileReader();
+  reader.onload = ev => {
+    _docB64 = ev.target.result; // data URL
+    const prev = document.getElementById('attachPreview');
+    const nm   = document.getElementById('attachName');
+    const sz   = document.getElementById('attachSize');
+    const ic   = document.getElementById('attachIcon');
+    if(prev) prev.classList.add('vis');
+    if(nm)   nm.textContent   = file.name;
+    if(sz)   sz.textContent   = (file.size/1024).toFixed(1)+' KB';
+    const ext = file.name.split('.').pop().toLowerCase();
+    const icons = {pdf:'📄',doc:'📝',docx:'📝',jpg:'🖼️',jpeg:'🖼️',png:'🖼️',xlsx:'📊',xls:'📊'};
+    if(ic) ic.textContent = icons[ext]||'📎';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearDoc(){
+  _docFile=null; _docB64=null;
+  document.getElementById('aDocInput').value='';
+  const prev=document.getElementById('attachPreview');
+  if(prev) prev.classList.remove('vis');
+}
+
+async function addComunicado(){
   const t=document.getElementById('aTitulo').value.trim();
   const c=document.getElementById('aCuerpo').value.trim();
   const tipo=document.getElementById('aTipo').value;
@@ -1269,13 +1333,20 @@ function addComunicado(){
     id:Date.now(),titulo:t,tipo,cuerpo:c,autor,
     fecha:now.toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'})
   };
+  // Attach document if any
+  if(_docB64 && _docFile){
+    com.docUrl  = _docB64;       // base64 data URL stored in Firestore
+    com.docName = _docFile.name;
+    showToast('⏳ Subiendo documento...','Espera un momento.');
+  }
   DB.comunicados.unshift(com);
-  guardarComunicado(com);
+  await guardarComunicado(com);
   renderMuro(); renderAdminComs();
   document.getElementById('aTitulo').value='';
   document.getElementById('aCuerpo').value='';
   document.getElementById('aAutor').value='';
-  showToast('✅ Comunicado publicado',`"${t}" guardado en la nube ☁️`);
+  clearDoc();
+  showToast('✅ Comunicado publicado', com.docUrl ? `"${t}" con documento adjunto ☁️` : `"${t}" guardado en la nube ☁️`);
 }
 function deleteComunicado(id){
   DB.comunicados=DB.comunicados.filter(c=>c.id!==id);
