@@ -322,6 +322,26 @@ footer{background:var(--deep);color:rgba(255,255,255,.62);padding:3rem 2rem 1.5r
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
   </script>
+
+  <!-- ═══ EMAILJS — envío de correos ═══ -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>
+    // EmailJS inicializado — servicio gratuito hasta 200 correos/mes
+    // INSTRUCCIÓN: reemplaza estas claves con las tuyas de emailjs.com
+    const EMAILJS_SERVICE  = 'service_villaserena';   // tu Service ID
+    const EMAILJS_TEMPLATE_PQR  = 'template_pqr';    // tu Template ID para PQR
+    const EMAILJS_TEMPLATE_PAGO = 'template_pago';   // tu Template ID para comprobantes
+    const EMAILJS_PUBLIC_KEY    = 'TU_PUBLIC_KEY';   // tu Public Key
+
+    // Correos destino
+    const CORREO_ADMIN        = 'admonvillaserena2022@gmail.com';
+    const CORREO_CONTABILIDAD = 'admonvillaserena2022@gmail.com'; // actualiza con el correo de contabilidad
+
+    (function(){
+      try{ emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY }); }
+      catch(e){ console.warn('EmailJS no inicializado:', e); }
+    })();
+  </script>
 </head>
 <body>
 
@@ -611,7 +631,7 @@ footer{background:var(--deep);color:rgba(255,255,255,.62);padding:3rem 2rem 1.5r
               <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
               Enviar comprobante WhatsApp
             </a>
-            <a href="mailto:CORREO_CONTABILIDAD?subject=Comprobante%20pago%20cuota%20administración"
+            <a href="mailto:admonvillaserena2022@gmail.com?subject=Comprobante%20de%20pago%20cuota%20de%20administración%20Villa%20Serena"
                style="display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.18);padding:.55rem 1.1rem;border-radius:7px;font-size:.8rem;font-weight:700;text-decoration:none;">
               📧 Enviar por correo
             </a>
@@ -1098,6 +1118,14 @@ footer{background:var(--deep);color:rgba(255,255,255,.62);padding:3rem 2rem 1.5r
           <strong>🔒 Recomendaciones de seguridad</strong>
           Usa una contraseña de mínimo 8 caracteres. No compartas el acceso. Cierra sesión después de cada uso.
         </div>
+        <div style="margin-top:1rem;background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:1rem;font-size:.8rem;color:#854D0E;line-height:1.75">
+          <strong>📧 Activar envío real de correos PQR</strong><br>
+          1. Ve a <strong>emailjs.com</strong> → crea cuenta gratis (200 correos/mes)<br>
+          2. Crea un <strong>Email Service</strong> conectado a Gmail → copia el <em>Service ID</em><br>
+          3. Crea un <strong>Email Template</strong> con variables: <code>{{tipo}}</code> <code>{{radicado}}</code> <code>{{nombre}}</code> <code>{{asunto}}</code> <code>{{descripcion}}</code> <code>{{to_email}}</code><br>
+          4. Copia el <em>Template ID</em> y tu <em>Public Key</em><br>
+          5. Pídele a Claude que los pegue en el HTML — 2 minutos y listo.
+        </div>
         <div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:1rem;margin-top:.75rem;font-size:.79rem;color:#166534;line-height:1.7">
           ☁️ <strong>Firebase activo</strong> — Todos los cambios se guardan en la nube de Google en tiempo real. Cualquier residente que abra la página verá los comunicados actualizados al instante.
         </div>
@@ -1569,22 +1597,113 @@ function abrirOtroMonto(el){document.querySelectorAll('.monto-btn').forEach(b=>b
 function updRes(){const f='$'+montoSel.toLocaleString('es-CO');document.getElementById('resMontoDisp').textContent=f;document.getElementById('totalPago').textContent=f;}
 function selPay(el){document.querySelectorAll('.pay-opt').forEach(p=>p.classList.remove('sel'));el.classList.add('sel');}
 function procesarPago(){
-  const tor=document.getElementById('pTorre').value;const apt=document.getElementById('pApto').value.trim();const cor=document.getElementById('pCorreo').value.trim();
-  if(!tor||!apt){showToast('⚠️ Faltan datos','Ingresa tu torre y apartamento.');return;}
-  if(!cor){showToast('⚠️ Correo requerido','Ingresa tu correo para recibir el comprobante.');return;}
-  const wk=DB.wompiKey;
-  if(wk&&wk.startsWith('pub_')){showToast('🔐 Redirigiendo a Wompi...','Pago seguro con Bancolombia.');setTimeout(()=>window.open('https://wompi.com','_blank'),1200);}
-  else{showToast('✅ Pago registrado',`${tor} Apto ${apt} — $${montoSel.toLocaleString('es-CO')}. Comprobante enviado a ${cor}. Ref: #PAG-${Math.floor(Math.random()*90000+10000)}`);}
+  const tor = document.getElementById('pTorre').value;
+  const apt = document.getElementById('pApto').value.trim();
+  const cor = document.getElementById('pCorreo').value.trim();
+  if(!tor||!apt){ showToast('⚠️ Faltan datos','Ingresa tu torre y apartamento.'); return; }
+  if(!cor){ showToast('⚠️ Correo requerido','Ingresa tu correo para recibir el comprobante.'); return; }
+
+  const ref = '#PAG-' + Math.floor(Math.random()*90000+10000);
+  const monto = '$' + montoSel.toLocaleString('es-CO');
+  const ref_pago = tor.replace('Torre ','') + '-' + apt;
+
+  showToast('📋 Instrucciones de pago','Realiza la transferencia con tu referencia y envía el comprobante.');
+
+  // Open mailto to contabilidad with prefilled comprobante template
+  setTimeout(()=>{
+    const subject = encodeURIComponent(`Comprobante de pago — ${tor} Apto ${apt} — ${ref}`);
+    const body = encodeURIComponent(
+      `Buenas,
+
+Adjunto mi comprobante de pago de cuota de administración:
+
+` +
+      `• Torre: ${tor}
+• Apartamento: ${apt}
+• Monto pagado: ${monto}
+• Referencia: ${ref_pago}
+• Código transacción: ${ref}
+` +
+      `• Correo de contacto: ${cor}
+
+[Por favor adjunta el pantallazo o foto del comprobante]
+
+Gracias.`
+    );
+    window.open(`mailto:${CORREO_CONTABILIDAD}?subject=${subject}&body=${body}`);
+  }, 1500);
 }
 
 // PQR
 function selPQR(el,tipo){document.querySelectorAll('.pqr-type').forEach(t=>t.classList.remove('sel'));el.classList.add('sel');document.getElementById('pqrTipo').value=tipo;}
-function enviarPQR(){
-  const n=document.getElementById('pqrNom').value.trim();const c=document.getElementById('pqrCor').value.trim();const a=document.getElementById('pqrAs').value.trim();
-  if(!n||!c||!a){showToast('⚠️ Formulario incompleto','Completa nombre, correo y asunto.');return;}
-  const tipo=document.getElementById('pqrTipo').value;const rad='PQR-'+Date.now().toString().slice(-6);
-  showToast(`✅ ${tipo} enviada`,`Radicado ${rad} enviado a admonvillaserena2022@gmail.com y a ${c}.`);
-  ['pqrNom','pqrCor','pqrAs','pqrDesc'].forEach(id=>document.getElementById(id).value='');
+async function enviarPQR(){
+  const n    = document.getElementById('pqrNom').value.trim();
+  const c    = document.getElementById('pqrCor').value.trim();
+  const a    = document.getElementById('pqrAs').value.trim();
+  const desc = document.getElementById('pqrDesc').value.trim();
+  const tor  = document.getElementById('pqrTor').value;
+  const ap   = document.getElementById('pqrAp').value.trim();
+  const pri  = document.getElementById('pqrPri')?.value || 'Normal';
+
+  if(!n||!c||!a){ showToast('⚠️ Formulario incompleto','Completa nombre, correo y asunto.'); return; }
+
+  const tipo = document.getElementById('pqrTipo').value;
+  const rad  = 'PQR-' + Date.now().toString().slice(-6);
+
+  // Show loading
+  const btn = document.querySelector('#pqr .btn-submit');
+  if(btn){ btn.textContent = '⏳ Enviando...'; btn.disabled = true; }
+
+  const params = {
+    tipo,
+    radicado:    rad,
+    nombre:      n,
+    correo:      c,
+    torre:       tor,
+    apartamento: ap,
+    asunto:      a,
+    descripcion: desc || '(Sin descripción adicional)',
+    prioridad:   pri,
+    fecha:       new Date().toLocaleString('es-CO'),
+    correo_admin: CORREO_ADMIN,
+    reply_to:    c,
+  };
+
+  try {
+    // Send to admin
+    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_PQR, {
+      ...params,
+      to_email: CORREO_ADMIN,
+      to_name:  'Administración Villa Serena',
+    });
+
+    // Send copy to resident
+    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_PQR, {
+      ...params,
+      to_email: c,
+      to_name:  n,
+    });
+
+    showToast(`✅ ${tipo} enviada correctamente`, `Radicado ${rad} — copia enviada a ${c} y a la administración.`);
+    ['pqrNom','pqrCor','pqrAs','pqrDesc','pqrAp'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+
+  } catch(err) {
+    console.error('Error EmailJS:', err);
+    // Fallback: open mailto
+    const mailBody = encodeURIComponent(
+      `Tipo: ${tipo}
+Radicado: ${rad}
+Nombre: ${n}
+Torre: ${tor} - Apto: ${ap}
+Asunto: ${a}
+
+${desc}`
+    );
+    window.open(`mailto:${CORREO_ADMIN}?subject=${encodeURIComponent('['+tipo+'] '+a+' — '+rad)}&body=${mailBody}`);
+    showToast(`📧 Abriendo correo...`, `Envía manualmente a ${CORREO_ADMIN}. Radicado: ${rad}`);
+  } finally {
+    if(btn){ btn.textContent = '📨 Enviar PQR'; btn.disabled = false; }
+  }
 }
 
 // RESERVAS con WhatsApp
