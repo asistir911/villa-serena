@@ -139,11 +139,11 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(26,43,40,.9
 .com-attachment{display:inline-flex;align-items:center;gap:6px;margin-top:.75rem;background:var(--teal-pale);border:1px solid rgba(42,122,107,.25);border-radius:7px;padding:.4rem .85rem;font-size:.75rem;font-weight:600;color:var(--teal-dark);text-decoration:none;cursor:pointer;transition:all .2s;}
 .com-attachment:hover{background:#C8E6E0;border-color:var(--teal);}
 .com-attachment svg{flex-shrink:0;}
-.admin-file-attach{border:2px dashed rgba(42,122,107,.3);border-radius:8px;padding:1rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--teal-pale);margin-top:.5rem;}
-.admin-file-attach:hover{border-color:var(--teal);background:#DDF0EB;}
+
+
 .admin-file-attach input{display:none;}
-.attach-preview{display:none;background:var(--teal-pale);border:1px solid rgba(42,122,107,.25);border-radius:7px;padding:.6rem .9rem;margin-top:.5rem;font-size:.8rem;color:var(--teal-dark);align-items:center;gap:8px;}
-.attach-preview.vis{display:flex;}
+
+
 .comprobante-box{background:rgba(42,122,107,.1);border:1px solid rgba(42,122,107,.3);border-radius:10px;padding:1rem 1.2rem;margin-top:1rem;display:flex;align-items:flex-start;gap:10px;}
 .comprobante-box .ci{font-size:1.3rem;}
 .comprobante-txt{font-size:.78rem;color:rgba(255,255,255,.6);line-height:1.65;}
@@ -1057,21 +1057,13 @@ footer{background:var(--deep);color:rgba(255,255,255,.62);padding:3rem 2rem 1.5r
           <div class="form-group"><label>Autor / Área</label><input type="text" id="aAutor" placeholder="Ej: Administración"></div>
           <div class="form-group" style="align-items:flex-end"><button class="btn-add" style="width:100%" onclick="addComunicado()">+ Publicar en Muro</button></div>
           <div class="form-group full">
-            <label>Documento adjunto <span style="color:var(--muted);font-weight:400">(opcional — PDF, imagen, Word)</span></label>
-            <div class="admin-file-attach" onclick="document.getElementById('aDocInput').click()">
-              <input type="file" id="aDocInput" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls" onchange="previewDoc(event)">
-              <div style="font-size:1.4rem;margin-bottom:.3rem">📎</div>
-              <div style="font-size:.8rem;color:var(--teal-dark);font-weight:600">Clic para adjuntar documento</div>
-              <div style="font-size:.72rem;color:var(--muted)">PDF · Word · Excel · Imagen · Máx. 5 MB</div>
-            </div>
-            <div class="attach-preview" id="attachPreview">
-              <span style="font-size:1.2rem" id="attachIcon">📄</span>
-              <div style="flex:1">
-                <div style="font-weight:600;font-size:.82rem" id="attachName"></div>
-                <div style="font-size:.72rem;color:var(--muted)" id="attachSize"></div>
-              </div>
-              <button onclick="clearDoc()" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:.8rem;font-weight:700">✕ Quitar</button>
-            </div>
+            <label>Enlace de documento <span style="color:var(--muted);font-weight:400">(opcional — Google Drive, PDF, imagen, etc.)</span></label>
+            <input type="url" id="aDocUrl" placeholder="https://drive.google.com/... o cualquier enlace">
+            <small style="color:var(--muted);font-size:.72rem;margin-top:3px;display:block">💡 Sube el archivo a Google Drive, copia el enlace y pégalo aquí. El residente podrá abrirlo con un clic.</small>
+          </div>
+          <div class="form-group full">
+            <label>Nombre del documento <span style="color:var(--muted);font-weight:400">(opcional)</span></label>
+            <input type="text" id="aDocNombre" placeholder="Ej: Circular_Julio_2026.pdf">
           </div>
         </div>
         <div style="font-weight:700;margin:1.4rem 0 .7rem;font-size:.88rem">Comunicados activos <span id="comCount" style="color:var(--muted);font-weight:400"></span></div>
@@ -1356,75 +1348,59 @@ function renderMuro(){
   const tm={urg:{cls:'t-urg',lbl:'Urgente',cc:'urg'},inf:{cls:'t-inf',lbl:'Informativo',cc:'inf'},nor:{cls:'t-nor',lbl:'Aviso',cc:'nor'}};
   g.innerHTML=DB.comunicados.map(c=>{
     const t=tm[c.tipo]||tm.nor;
-    const hasDoc = c.docUrl ? `<span class="com-attachment" style="pointer-events:none;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> ${c.docName||'Ver documento'}</span>` : '';
-    const hint = `<div style="font-size:.7rem;color:var(--teal);margin-top:.6rem;font-weight:600;">👆 Toca para ver completo${c.docUrl?' · 📎 Incluye documento':''}</div>`;
+    const docChip = c.docUrl
+      ? `<a href="${c.docUrl}" target="_blank" rel="noopener" class="com-attachment" onclick="event.stopPropagation()">
+           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+           ${c.docName||'Ver documento'}
+         </a>`
+      : '';
+    const hint = `<div style="font-size:.7rem;color:var(--teal);margin-top:.6rem;font-weight:600;opacity:.8;">👆 Toca para leer completo</div>`;
     return `<div class="com-card ${t.cc}" onclick="abrirComModal('${c.id}')" style="cursor:pointer;">
       <span class="com-tag ${t.cls}">${t.lbl}</span>
       <div class="com-title">${c.titulo}</div>
-      <div class="com-body">${c.cuerpo.length>120?c.cuerpo.substring(0,120)+'…':c.cuerpo}</div>
+      <div class="com-body">${c.cuerpo.length>140?c.cuerpo.substring(0,140)+'…':c.cuerpo}</div>
+      ${docChip}
       ${hint}
       <div class="com-date">📅 ${c.fecha} · ${c.autor}</div>
     </div>`;
   }).join('');
 }
-// Doc attachment state
-let _docFile = null;
-let _docB64  = null;
-
-function previewDoc(e){
-  const file = e.target.files[0]; if(!file) return;
-  if(file.size > 5*1024*1024){ showToast('⚠️ Archivo muy grande','Máximo 5 MB.'); return; }
-  _docFile = file;
-  // Read as base64 to store in Firebase
-  const reader = new FileReader();
-  reader.onload = ev => {
-    _docB64 = ev.target.result; // data URL
-    const prev = document.getElementById('attachPreview');
-    const nm   = document.getElementById('attachName');
-    const sz   = document.getElementById('attachSize');
-    const ic   = document.getElementById('attachIcon');
-    if(prev) prev.classList.add('vis');
-    if(nm)   nm.textContent   = file.name;
-    if(sz)   sz.textContent   = (file.size/1024).toFixed(1)+' KB';
-    const ext = file.name.split('.').pop().toLowerCase();
-    const icons = {pdf:'📄',doc:'📝',docx:'📝',jpg:'🖼️',jpeg:'🖼️',png:'🖼️',xlsx:'📊',xls:'📊'};
-    if(ic) ic.textContent = icons[ext]||'📎';
-  };
-  reader.readAsDataURL(file);
-}
-
-function clearDoc(){
-  _docFile=null; _docB64=null;
-  document.getElementById('aDocInput').value='';
-  const prev=document.getElementById('attachPreview');
-  if(prev) prev.classList.remove('vis');
-}
-
 async function addComunicado(){
-  const t=document.getElementById('aTitulo').value.trim();
-  const c=document.getElementById('aCuerpo').value.trim();
-  const tipo=document.getElementById('aTipo').value;
-  const autor=document.getElementById('aAutor').value.trim()||'Administración';
-  if(!t||!c){showToast('⚠️ Faltan datos','Completa título y contenido.');return;}
-  const now=new Date();
-  const com={
-    id:Date.now(),titulo:t,tipo,cuerpo:c,autor,
-    fecha:now.toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'})
+  const t     = document.getElementById('aTitulo').value.trim();
+  const c     = document.getElementById('aCuerpo').value.trim();
+  const tipo  = document.getElementById('aTipo').value;
+  const autor = document.getElementById('aAutor').value.trim() || 'Administración';
+  const docUrl   = (document.getElementById('aDocUrl')?.value || '').trim();
+  const docNombre= (document.getElementById('aDocNombre')?.value || '').trim();
+
+  if(!t||!c){ showToast('⚠️ Faltan datos','Completa título y contenido.'); return; }
+
+  const now = new Date();
+  const com = {
+    id:    Date.now(),
+    titulo: t,
+    tipo,
+    cuerpo: c,
+    autor,
+    fecha: now.toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'})
   };
-  // Attach document if any
-  if(_docB64 && _docFile){
-    com.docUrl  = _docB64;       // base64 data URL stored in Firestore
-    com.docName = _docFile.name;
-    showToast('⏳ Subiendo documento...','Espera un momento.');
+
+  if(docUrl){
+    com.docUrl  = docUrl;
+    com.docName = docNombre || 'Ver documento';
   }
+
   DB.comunicados.unshift(com);
   await guardarComunicado(com);
-  renderMuro(); renderAdminComs();
-  document.getElementById('aTitulo').value='';
-  document.getElementById('aCuerpo').value='';
-  document.getElementById('aAutor').value='';
-  clearDoc();
-  showToast('✅ Comunicado publicado', com.docUrl ? `"${t}" con documento adjunto ☁️` : `"${t}" guardado en la nube ☁️`);
+  renderMuro();
+  renderAdminComs();
+
+  // Clear form
+  ['aTitulo','aCuerpo','aAutor','aDocUrl','aDocNombre'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+
+  showToast('✅ Comunicado publicado', docUrl ? `"${t}" con enlace adjunto ☁️` : `"${t}" guardado en la nube ☁️`);
 }
 function deleteComunicado(id){
   DB.comunicados=DB.comunicados.filter(c=>c.id!==id);
@@ -1845,39 +1821,7 @@ function showToast(title,body=''){
   t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),4500);
 }
 
-// ── Abrir documento adjunto de comunicado ────────────────────────────
-function abrirDocumento(comId){
-  const com = DB.comunicados.find(c => String(c.id) === String(comId));
-  if(!com || !com.docUrl){
-    showToast('⚠️ Documento no disponible','El documento no está disponible.');
-    return;
-  }
-  try{
-    // If it's a data URL, convert to blob and open
-    if(com.docUrl.startsWith('data:')){
-      const [meta, b64] = com.docUrl.split(',');
-      const mime = meta.match(/:(.*?);/)[1];
-      const binary = atob(b64);
-      const arr = new Uint8Array(binary.length);
-      for(let i=0;i<binary.length;i++) arr[i]=binary.charCodeAt(i);
-      const blob = new Blob([arr], {type: mime});
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href     = url;
-      a.download = com.docName || 'documento';
-      a.target   = '_blank';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(()=>{ URL.revokeObjectURL(url); document.body.removeChild(a); }, 2000);
-    } else {
-      // Regular URL — just open
-      window.open(com.docUrl, '_blank');
-    }
-  } catch(err){
-    console.error('Error abriendo documento:', err);
-    showToast('❌ Error al abrir','No se pudo abrir el documento.');
-  }
-}
+
 
 
 // ── Modal Comunicado ────────────────────────────────────────────────────
@@ -1912,67 +1856,20 @@ function abrirComModal(comId){
 
   if(com.docUrl){
     docSection.style.display = 'block';
-    docPreview.innerHTML = '';
-    docActions.innerHTML = '';
-
-    const ext = (com.docName||'').split('.').pop().toLowerCase();
-    const isImg  = ['jpg','jpeg','png','gif','webp'].includes(ext);
-    const isPdf  = ext === 'pdf';
-
-    if(isImg){
-      // Show image directly
-      const img = document.createElement('img');
-      img.src = com.docUrl;
-      img.alt = com.docName || 'Imagen adjunta';
-      img.style.cssText = 'width:100%;max-height:420px;object-fit:contain;display:block;background:#f0f0f0;border-radius:10px;';
-      docPreview.appendChild(img);
-
-    } else if(isPdf){
-      // Embed PDF in iframe
-      try{
-        if(com.docUrl.startsWith('data:')){
-          const iframe = document.createElement('iframe');
-          iframe.className = 'com-doc-iframe';
-          iframe.title = com.docName || 'Documento PDF';
-          // Convert to blob URL for iframe
-          const [meta, b64] = com.docUrl.split(',');
-          const mime = meta.match(/:(.*?);/)[1];
-          const binary = atob(b64);
-          const arr = new Uint8Array(binary.length);
-          for(let i=0;i<binary.length;i++) arr[i]=binary.charCodeAt(i);
-          const blob  = new Blob([arr],{type:mime});
-          const burl  = URL.createObjectURL(blob);
-          iframe.src  = burl;
-          docPreview.appendChild(iframe);
-        }
-      } catch(e){
-        docPreview.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--muted);font-size:.85rem">📄 PDF adjunto — usa los botones para abrirlo o descargarlo.</div>';
-      }
-
-    } else {
-      // Word, Excel, etc — show icon + name
-      const icons = {doc:'📝',docx:'📝',xls:'📊',xlsx:'📊',txt:'📃',ppt:'📊',pptx:'📊'};
-      const icon  = icons[ext] || '📎';
-      docPreview.innerHTML = `<div style="padding:2.5rem;text-align:center;">
-        <div style="font-size:3.5rem;margin-bottom:.75rem">${icon}</div>
-        <div style="font-weight:700;font-size:.95rem;color:var(--deep);margin-bottom:.3rem">${com.docName||'Documento adjunto'}</div>
-        <div style="font-size:.78rem;color:var(--muted)">Usa los botones de abajo para ver o descargar</div>
-      </div>`;
-    }
-
-    // Action buttons — always show open + download
-    const btnAbrir = document.createElement('button');
-    btnAbrir.className = 'btn-doc-open';
-    btnAbrir.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Abrir en nueva pestaña`;
-    btnAbrir.onclick = () => abrirDocumentoBlob(com);
-    docActions.appendChild(btnAbrir);
-
-    const btnDl = document.createElement('button');
-    btnDl.className = 'btn-doc-dl';
-    btnDl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar`;
-    btnDl.onclick = () => descargarDocumento(com);
-    docActions.appendChild(btnDl);
-
+    docPreview.innerHTML = `<div style="padding:1.25rem;display:flex;align-items:center;gap:1rem;background:var(--teal-pale);border-radius:10px;">
+      <div style="font-size:2.2rem;flex-shrink:0;">📎</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:.9rem;color:var(--deep);margin-bottom:.2rem;">${com.docName||'Documento adjunto'}</div>
+        <div style="font-size:.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${com.docUrl}</div>
+      </div>
+    </div>`;
+    docActions.innerHTML = `<a href="${com.docUrl}" target="_blank" rel="noopener" class="btn-doc-open">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+        <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+      Abrir documento
+    </a>`;
   } else {
     docSection.style.display = 'none';
   }
@@ -1987,42 +1884,9 @@ function cerrarComModal(){
   document.body.style.overflow = '';
 }
 
-function abrirDocumentoBlob(com){
-  try{
-    if(com.docUrl.startsWith('data:')){
-      const [meta,b64] = com.docUrl.split(',');
-      const mime = meta.match(/:(.*?);/)[1];
-      const binary = atob(b64);
-      const arr = new Uint8Array(binary.length);
-      for(let i=0;i<binary.length;i++) arr[i]=binary.charCodeAt(i);
-      const blob = new Blob([arr],{type:mime});
-      window.open(URL.createObjectURL(blob),'_blank');
-    } else {
-      window.open(com.docUrl,'_blank');
-    }
-  } catch(e){ showToast('❌ Error','No se pudo abrir el documento.'); }
-}
 
-function descargarDocumento(com){
-  try{
-    if(com.docUrl.startsWith('data:')){
-      const a = document.createElement('a');
-      a.href = com.docUrl;
-      a.download = com.docName || 'documento';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    } else {
-      const a = document.createElement('a');
-      a.href = com.docUrl;
-      a.download = com.docName || 'documento';
-      a.target = '_blank';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-  } catch(e){ showToast('❌ Error','No se pudo descargar el documento.'); }
-}
+
+
 
 function animateEntradas(){
   const io=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';}}),{threshold:.06});
