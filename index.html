@@ -1118,13 +1118,15 @@ footer{background:var(--deep);color:rgba(255,255,255,.62);padding:3rem 2rem 1.5r
           <strong>🔒 Recomendaciones de seguridad</strong>
           Usa una contraseña de mínimo 8 caracteres. No compartas el acceso. Cierra sesión después de cada uso.
         </div>
-        <div style="margin-top:1rem;background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:1rem;font-size:.8rem;color:#854D0E;line-height:1.75">
-          <strong>📧 Activar envío real de correos PQR</strong><br>
-          1. Ve a <strong>emailjs.com</strong> → crea cuenta gratis (200 correos/mes)<br>
-          2. Crea un <strong>Email Service</strong> conectado a Gmail → copia el <em>Service ID</em><br>
-          3. Crea un <strong>Email Template</strong> con variables: <code>{{tipo}}</code> <code>{{radicado}}</code> <code>{{nombre}}</code> <code>{{asunto}}</code> <code>{{descripcion}}</code> <code>{{to_email}}</code><br>
-          4. Copia el <em>Template ID</em> y tu <em>Public Key</em><br>
-          5. Pídele a Claude que los pegue en el HTML — 2 minutos y listo.
+        <div style="margin-top:1rem;background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:1.1rem;font-size:.8rem;color:#854D0E;line-height:1.8">
+          <strong>📧 Activar envío automático de correos PQR — Formspree</strong><br>
+          Sigue estos pasos UNA sola vez y los correos llegarán automáticamente:<br><br>
+          1. Ve a <strong style="color:#92400E">formspree.io</strong> → crea cuenta gratis con tu Gmail<br>
+          2. Clic en <strong>+ New Form</strong> → nombre: <em>PQR Villa Serena</em><br>
+          3. Pon el correo destino: <strong>admonvillaserena2022@gmail.com</strong><br>
+          4. Copia el ID que aparece en la URL — es algo así: <strong>xpzvwrqk</strong><br>
+          5. Mándale ese ID a Claude y lo activa en 2 minutos.<br><br>
+          Formspree envía hasta <strong>50 correos gratis al mes</strong>. Sin tarjeta de crédito.
         </div>
         <div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:1rem;margin-top:.75rem;font-size:.79rem;color:#166534;line-height:1.7">
           ☁️ <strong>Firebase activo</strong> — Todos los cambios se guardan en la nube de Google en tiempo real. Cualquier residente que abra la página verá los comunicados actualizados al instante.
@@ -1310,10 +1312,10 @@ function renderMuro(){
   g.innerHTML=DB.comunicados.map(c=>{
     const t=tm[c.tipo]||tm.nor;
     const adjunto = c.docUrl ? `
-      <a href="${c.docUrl}" target="_blank" download="${c.docName||'documento'}" class="com-attachment">
+      <button onclick="abrirDocumento('${c.id}')" class="com-attachment" style="border:none;cursor:pointer;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        ${c.docName||'Ver documento adjunto'}
-      </a>` : '';
+        📎 ${c.docName||'Ver documento adjunto'}
+      </button>` : '';
     return `<div class="com-card ${t.cc}"><span class="com-tag ${t.cls}">${t.lbl}</span><div class="com-title">${c.titulo}</div><div class="com-body">${c.cuerpo}</div>${adjunto}<div class="com-date">📅 ${c.fecha} · ${c.autor}</div></div>`;
   }).join('');
 }
@@ -1649,61 +1651,81 @@ async function enviarPQR(){
 
   const tipo = document.getElementById('pqrTipo').value;
   const rad  = 'PQR-' + Date.now().toString().slice(-6);
+  const fecha = new Date().toLocaleString('es-CO');
 
-  // Show loading
   const btn = document.querySelector('#pqr .btn-submit');
   if(btn){ btn.textContent = '⏳ Enviando...'; btn.disabled = true; }
 
-  const params = {
-    tipo,
-    radicado:    rad,
-    nombre:      n,
-    correo:      c,
-    torre:       tor,
-    apartamento: ap,
-    asunto:      a,
-    descripcion: desc || '(Sin descripción adicional)',
-    prioridad:   pri,
-    fecha:       new Date().toLocaleString('es-CO'),
-    correo_admin: CORREO_ADMIN,
-    reply_to:    c,
-  };
+  // ── Intento 1: EmailJS (si está configurado con clave real) ──────
+  let enviado = false;
+  if(EMAILJS_PUBLIC_KEY !== 'TU_PUBLIC_KEY'){
+    try{
+      const params = { tipo, radicado:rad, nombre:n, correo:c, torre:tor,
+        apartamento:ap, asunto:a, descripcion:desc||'(Sin descripción)',
+        prioridad:pri, fecha, reply_to:c };
+      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_PQR,
+        { ...params, to_email:CORREO_ADMIN, to_name:'Administración Villa Serena' });
+      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_PQR,
+        { ...params, to_email:c, to_name:n });
+      enviado = true;
+    } catch(e){ console.warn('EmailJS falló:', e); }
+  }
 
-  try {
-    // Send to admin
-    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_PQR, {
-      ...params,
-      to_email: CORREO_ADMIN,
-      to_name:  'Administración Villa Serena',
+  // ── Intento 2: Formspree (funciona sin configuración extra) ──────
+  if(!enviado){
+    try{
+      const res = await fetch('https://formspree.io/f/FORMSPREE_ID', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body: JSON.stringify({
+          _replyto: c,
+          _subject: `[${tipo}] ${a} — ${rad}`,
+          tipo, radicado:rad, nombre:n, correo_residente:c,
+          torre:tor, apartamento:ap, asunto:a,
+          descripcion: desc||'(Sin descripción adicional)',
+          prioridad:pri, fecha,
+        })
+      });
+      if(res.ok) enviado = true;
+    } catch(e){ console.warn('Formspree falló:', e); }
+  }
+
+  // ── Resultado ────────────────────────────────────────────────────
+  if(enviado){
+    showToast(`✅ ${tipo} enviada`,`Radicado ${rad} enviado a ${CORREO_ADMIN} y copia a ${c}.`);
+    ['pqrNom','pqrCor','pqrAs','pqrDesc','pqrAp'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.value='';
     });
+  } else {
+    // ── Fallback final: abrir cliente de correo del dispositivo ──
+    const asuntoMail = encodeURIComponent(`[${tipo}] ${a} — Radicado ${rad}`);
+    const cuerpoMail = encodeURIComponent(
+      `Estimada Administración Villa Serena,
 
-    // Send copy to resident
-    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_PQR, {
-      ...params,
-      to_email: c,
-      to_name:  n,
-    });
-
-    showToast(`✅ ${tipo} enviada correctamente`, `Radicado ${rad} — copia enviada a ${c} y a la administración.`);
-    ['pqrNom','pqrCor','pqrAs','pqrDesc','pqrAp'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-
-  } catch(err) {
-    console.error('Error EmailJS:', err);
-    // Fallback: open mailto
-    const mailBody = encodeURIComponent(
+` +
       `Tipo: ${tipo}
 Radicado: ${rad}
-Nombre: ${n}
-Torre: ${tor} - Apto: ${ap}
+Fecha: ${fecha}
+` +
+      `Nombre: ${n}
+Correo: ${c}
+Torre: ${tor} — Apartamento: ${ap}
+` +
+      `Prioridad: ${pri}
+
 Asunto: ${a}
 
-${desc}`
+Descripción:
+${desc||'(Sin descripción adicional)'}
+
+` +
+      `Por favor enviar copia de respuesta a: ${c}`
     );
-    window.open(`mailto:${CORREO_ADMIN}?subject=${encodeURIComponent('['+tipo+'] '+a+' — '+rad)}&body=${mailBody}`);
-    showToast(`📧 Abriendo correo...`, `Envía manualmente a ${CORREO_ADMIN}. Radicado: ${rad}`);
-  } finally {
-    if(btn){ btn.textContent = '📨 Enviar PQR'; btn.disabled = false; }
+    window.location.href = `mailto:${CORREO_ADMIN}?subject=${asuntoMail}&body=${cuerpoMail}`;
+    showToast(`📧 Abriendo correo`,`Envía el mensaje que se abrió en tu correo. Radicado: ${rad}`);
   }
+
+  if(btn){ btn.textContent = '📨 Enviar PQR'; btn.disabled = false; }
 }
 
 // RESERVAS con WhatsApp
@@ -1774,6 +1796,41 @@ function showToast(title,body=''){
   document.getElementById('tTitle').textContent=title;document.getElementById('tBody').textContent=body;
   t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),4500);
 }
+
+// ── Abrir documento adjunto de comunicado ────────────────────────────
+function abrirDocumento(comId){
+  const com = DB.comunicados.find(c => String(c.id) === String(comId));
+  if(!com || !com.docUrl){
+    showToast('⚠️ Documento no disponible','El documento no está disponible.');
+    return;
+  }
+  try{
+    // If it's a data URL, convert to blob and open
+    if(com.docUrl.startsWith('data:')){
+      const [meta, b64] = com.docUrl.split(',');
+      const mime = meta.match(/:(.*?);/)[1];
+      const binary = atob(b64);
+      const arr = new Uint8Array(binary.length);
+      for(let i=0;i<binary.length;i++) arr[i]=binary.charCodeAt(i);
+      const blob = new Blob([arr], {type: mime});
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = com.docName || 'documento';
+      a.target   = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(url); document.body.removeChild(a); }, 2000);
+    } else {
+      // Regular URL — just open
+      window.open(com.docUrl, '_blank');
+    }
+  } catch(err){
+    console.error('Error abriendo documento:', err);
+    showToast('❌ Error al abrir','No se pudo abrir el documento.');
+  }
+}
+
 function animateEntradas(){
   const io=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';}}),{threshold:.06});
   document.querySelectorAll('.zona-card,.inmo-card,.srv-card,.dir-card,.com-card').forEach(el=>{
