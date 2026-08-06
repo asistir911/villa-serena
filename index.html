@@ -305,6 +305,30 @@ footer{background:var(--deep);color:rgba(255,255,255,.62);padding:3rem 2rem 1.5r
   .nav-logo-asistir{height:54px;}
   .nav-logo-villa{height:44px;}
 }
+
+/* ── Modal Comunicado Expandido ── */
+.com-modal-ov{display:none;position:fixed;inset:0;z-index:6000;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:1rem;}
+.com-modal-ov.act{display:flex;}
+.com-modal{background:var(--white);border-radius:var(--radius);max-width:620px;width:100%;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.3);}
+.com-modal-header{padding:1.75rem 2rem 1.25rem;border-bottom:1px solid rgba(0,0,0,.07);position:sticky;top:0;background:var(--white);z-index:1;}
+.com-modal-tag{display:inline-block;font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:.2rem .65rem;border-radius:100px;margin-bottom:.75rem;}
+.com-modal-title{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:700;line-height:1.3;color:var(--deep);margin-bottom:.3rem;}
+.com-modal-meta{font-size:.76rem;color:var(--muted);}
+.com-modal-close{position:absolute;top:1.25rem;right:1.25rem;background:rgba(0,0,0,.06);border:none;width:32px;height:32px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;color:var(--text);}
+.com-modal-close:hover{background:rgba(0,0,0,.12);}
+.com-modal-body{padding:1.5rem 2rem;}
+.com-modal-cuerpo{font-size:.92rem;line-height:1.85;color:var(--text);white-space:pre-wrap;}
+.com-modal-doc{margin-top:1.5rem;border-top:1px solid rgba(0,0,0,.07);padding-top:1.25rem;}
+.com-modal-doc-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.85rem;}
+.com-doc-preview{background:var(--cream);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.com-doc-preview img{width:100%;max-height:400px;object-fit:contain;display:block;background:#f8f8f8;}
+.com-doc-iframe{width:100%;height:420px;border:none;border-radius:0 0 10px 10px;}
+.com-doc-actions{display:flex;gap:.75rem;margin-top:1rem;flex-wrap:wrap;}
+.btn-doc-open{display:inline-flex;align-items:center;gap:7px;background:var(--teal);color:#fff;border:none;padding:.6rem 1.2rem;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;text-decoration:none;transition:all .2s;font-family:'Inter',sans-serif;}
+.btn-doc-open:hover{background:var(--teal-dark);}
+.btn-doc-dl{display:inline-flex;align-items:center;gap:7px;background:var(--cream);color:var(--text);border:1px solid var(--border);padding:.6rem 1.2rem;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;font-family:'Inter',sans-serif;}
+.btn-doc-dl:hover{background:#eee;}
+
 </style>
 
   <!-- ═══ FIREBASE ═══ -->
@@ -1137,6 +1161,27 @@ footer{background:var(--deep);color:rgba(255,255,255,.62);padding:3rem 2rem 1.5r
   </div>
 </div>
 
+
+<!-- ══ MODAL COMUNICADO EXPANDIDO ══ -->
+<div class="com-modal-ov" id="comModal" onclick="if(event.target===this)cerrarComModal()">
+  <div class="com-modal">
+    <div class="com-modal-header">
+      <button class="com-modal-close" onclick="cerrarComModal()">✕</button>
+      <div class="com-modal-tag" id="cmTag"></div>
+      <div class="com-modal-title" id="cmTitulo"></div>
+      <div class="com-modal-meta" id="cmMeta"></div>
+    </div>
+    <div class="com-modal-body">
+      <div class="com-modal-cuerpo" id="cmCuerpo"></div>
+      <div class="com-modal-doc" id="cmDocSection" style="display:none">
+        <div class="com-modal-doc-title">📎 Documento adjunto</div>
+        <div class="com-doc-preview" id="cmDocPreview"></div>
+        <div class="com-doc-actions" id="cmDocActions"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"><div class="t-title" id="tTitle"></div><div class="t-body" id="tBody"></div></div>
 
@@ -1311,12 +1356,15 @@ function renderMuro(){
   const tm={urg:{cls:'t-urg',lbl:'Urgente',cc:'urg'},inf:{cls:'t-inf',lbl:'Informativo',cc:'inf'},nor:{cls:'t-nor',lbl:'Aviso',cc:'nor'}};
   g.innerHTML=DB.comunicados.map(c=>{
     const t=tm[c.tipo]||tm.nor;
-    const adjunto = c.docUrl ? `
-      <button onclick="abrirDocumento('${c.id}')" class="com-attachment" style="border:none;cursor:pointer;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        📎 ${c.docName||'Ver documento adjunto'}
-      </button>` : '';
-    return `<div class="com-card ${t.cc}"><span class="com-tag ${t.cls}">${t.lbl}</span><div class="com-title">${c.titulo}</div><div class="com-body">${c.cuerpo}</div>${adjunto}<div class="com-date">📅 ${c.fecha} · ${c.autor}</div></div>`;
+    const hasDoc = c.docUrl ? `<span class="com-attachment" style="pointer-events:none;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> ${c.docName||'Ver documento'}</span>` : '';
+    const hint = `<div style="font-size:.7rem;color:var(--teal);margin-top:.6rem;font-weight:600;">👆 Toca para ver completo${c.docUrl?' · 📎 Incluye documento':''}</div>`;
+    return `<div class="com-card ${t.cc}" onclick="abrirComModal('${c.id}')" style="cursor:pointer;">
+      <span class="com-tag ${t.cls}">${t.lbl}</span>
+      <div class="com-title">${c.titulo}</div>
+      <div class="com-body">${c.cuerpo.length>120?c.cuerpo.substring(0,120)+'…':c.cuerpo}</div>
+      ${hint}
+      <div class="com-date">📅 ${c.fecha} · ${c.autor}</div>
+    </div>`;
   }).join('');
 }
 // Doc attachment state
@@ -1788,7 +1836,7 @@ function openModal(id){document.getElementById(id).classList.add('act');}
 function closeM(id){document.getElementById(id).classList.remove('act');}
 document.querySelectorAll('.modal-ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('act');}));
 document.getElementById('loginOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeLogin();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeM('resModal');closeM('pubModal');closeAdmin();closeLogin();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeM('resModal');closeM('pubModal');closeAdmin();closeLogin();cerrarComModal();}});
 
 let toastT;
 function showToast(title,body=''){
@@ -1829,6 +1877,151 @@ function abrirDocumento(comId){
     console.error('Error abriendo documento:', err);
     showToast('❌ Error al abrir','No se pudo abrir el documento.');
   }
+}
+
+
+// ── Modal Comunicado ────────────────────────────────────────────────────
+const TAG_MAP = {
+  urg:{cls:'t-urg',lbl:'Urgente'},
+  inf:{cls:'t-inf',lbl:'Informativo'},
+  nor:{cls:'t-nor',lbl:'Aviso'}
+};
+
+function abrirComModal(comId){
+  const com = DB.comunicados.find(c => String(c.id) === String(comId));
+  if(!com) return;
+
+  const t = TAG_MAP[com.tipo] || TAG_MAP.nor;
+
+  // Tag
+  const tagEl = document.getElementById('cmTag');
+  tagEl.textContent = t.lbl;
+  tagEl.className = 'com-modal-tag ' + t.cls;
+
+  // Título y meta
+  document.getElementById('cmTitulo').textContent = com.titulo;
+  document.getElementById('cmMeta').textContent   = '📅 ' + com.fecha + '  ·  ' + com.autor;
+
+  // Cuerpo
+  document.getElementById('cmCuerpo').textContent = com.cuerpo;
+
+  // Documento adjunto
+  const docSection = document.getElementById('cmDocSection');
+  const docPreview = document.getElementById('cmDocPreview');
+  const docActions = document.getElementById('cmDocActions');
+
+  if(com.docUrl){
+    docSection.style.display = 'block';
+    docPreview.innerHTML = '';
+    docActions.innerHTML = '';
+
+    const ext = (com.docName||'').split('.').pop().toLowerCase();
+    const isImg  = ['jpg','jpeg','png','gif','webp'].includes(ext);
+    const isPdf  = ext === 'pdf';
+
+    if(isImg){
+      // Show image directly
+      const img = document.createElement('img');
+      img.src = com.docUrl;
+      img.alt = com.docName || 'Imagen adjunta';
+      img.style.cssText = 'width:100%;max-height:420px;object-fit:contain;display:block;background:#f0f0f0;border-radius:10px;';
+      docPreview.appendChild(img);
+
+    } else if(isPdf){
+      // Embed PDF in iframe
+      try{
+        if(com.docUrl.startsWith('data:')){
+          const iframe = document.createElement('iframe');
+          iframe.className = 'com-doc-iframe';
+          iframe.title = com.docName || 'Documento PDF';
+          // Convert to blob URL for iframe
+          const [meta, b64] = com.docUrl.split(',');
+          const mime = meta.match(/:(.*?);/)[1];
+          const binary = atob(b64);
+          const arr = new Uint8Array(binary.length);
+          for(let i=0;i<binary.length;i++) arr[i]=binary.charCodeAt(i);
+          const blob  = new Blob([arr],{type:mime});
+          const burl  = URL.createObjectURL(blob);
+          iframe.src  = burl;
+          docPreview.appendChild(iframe);
+        }
+      } catch(e){
+        docPreview.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--muted);font-size:.85rem">📄 PDF adjunto — usa los botones para abrirlo o descargarlo.</div>';
+      }
+
+    } else {
+      // Word, Excel, etc — show icon + name
+      const icons = {doc:'📝',docx:'📝',xls:'📊',xlsx:'📊',txt:'📃',ppt:'📊',pptx:'📊'};
+      const icon  = icons[ext] || '📎';
+      docPreview.innerHTML = `<div style="padding:2.5rem;text-align:center;">
+        <div style="font-size:3.5rem;margin-bottom:.75rem">${icon}</div>
+        <div style="font-weight:700;font-size:.95rem;color:var(--deep);margin-bottom:.3rem">${com.docName||'Documento adjunto'}</div>
+        <div style="font-size:.78rem;color:var(--muted)">Usa los botones de abajo para ver o descargar</div>
+      </div>`;
+    }
+
+    // Action buttons — always show open + download
+    const btnAbrir = document.createElement('button');
+    btnAbrir.className = 'btn-doc-open';
+    btnAbrir.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Abrir en nueva pestaña`;
+    btnAbrir.onclick = () => abrirDocumentoBlob(com);
+    docActions.appendChild(btnAbrir);
+
+    const btnDl = document.createElement('button');
+    btnDl.className = 'btn-doc-dl';
+    btnDl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar`;
+    btnDl.onclick = () => descargarDocumento(com);
+    docActions.appendChild(btnDl);
+
+  } else {
+    docSection.style.display = 'none';
+  }
+
+  // Open modal
+  document.getElementById('comModal').classList.add('act');
+  document.body.style.overflow = 'hidden';
+}
+
+function cerrarComModal(){
+  document.getElementById('comModal').classList.remove('act');
+  document.body.style.overflow = '';
+}
+
+function abrirDocumentoBlob(com){
+  try{
+    if(com.docUrl.startsWith('data:')){
+      const [meta,b64] = com.docUrl.split(',');
+      const mime = meta.match(/:(.*?);/)[1];
+      const binary = atob(b64);
+      const arr = new Uint8Array(binary.length);
+      for(let i=0;i<binary.length;i++) arr[i]=binary.charCodeAt(i);
+      const blob = new Blob([arr],{type:mime});
+      window.open(URL.createObjectURL(blob),'_blank');
+    } else {
+      window.open(com.docUrl,'_blank');
+    }
+  } catch(e){ showToast('❌ Error','No se pudo abrir el documento.'); }
+}
+
+function descargarDocumento(com){
+  try{
+    if(com.docUrl.startsWith('data:')){
+      const a = document.createElement('a');
+      a.href = com.docUrl;
+      a.download = com.docName || 'documento';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else {
+      const a = document.createElement('a');
+      a.href = com.docUrl;
+      a.download = com.docName || 'documento';
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  } catch(e){ showToast('❌ Error','No se pudo descargar el documento.'); }
 }
 
 function animateEntradas(){
