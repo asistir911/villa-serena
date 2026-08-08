@@ -347,6 +347,13 @@ footer{background:var(--deep);color:rgba(255,255,255,.62);padding:3rem 2rem 1.5r
     const db = firebase.firestore();
   </script>
 
+
+  <!-- ═══ CLOUDINARY — subida de archivos ═══ -->
+  <script>
+    const CLOUDINARY_CLOUD = 'x6ynz5uq';
+    const CLOUDINARY_PRESET = 'villa_serena_unsigned'; // crear en Cloudinary dashboard
+    const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`;
+  </script>
   <!-- ═══ EMAILJS — envío de correos ═══ -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>
@@ -825,13 +832,23 @@ footer{background:var(--deep);color:rgba(255,255,255,.62);padding:3rem 2rem 1.5r
     </div>
     <div class="srv-grid">
       <div class="srv-card na"><div class="srv-icon" style="background:#F3F4F6">🅿️</div><div class="srv-name">Parqueadero</div><div class="srv-desc">Consulta de puestos.</div><span class="na-badge">No aplica</span></div>
-      <div class="srv-card" onclick="showToast('📦 Correspondencia','Notificación de paquetes en portería')"><div class="srv-icon" style="background:#DCFCE7">📦</div><div class="srv-name">Correspondencia</div><div class="srv-desc">Notificación cuando lleguen paquetes a portería.</div></div>
-      <div class="srv-card" onclick="showToast('🔧 Mantenimiento','Solicitar revisión de áreas comunes')"><div class="srv-icon" style="background:#FEF3C7">🔧</div><div class="srv-name">Mantenimiento</div><div class="srv-desc">Plomería, electricidad y daños en áreas comunes.</div></div>
-      <div class="srv-card" onclick="showToast('🐾 Mascotas','Registro obligatorio según reglamento P.H.')"><div class="srv-icon" style="background:#FCE7F3">🐾</div><div class="srv-name">Registro Mascotas</div><div class="srv-desc">Registro obligatorio según reglamento P.H.</div></div>
-      <div class="srv-card" onclick="showToast('🚗 Visitantes','Pre-registra tus visitantes')"><div class="srv-icon" style="background:#E0F2FE">🚗</div><div class="srv-name">Ingreso Visitantes</div><div class="srv-desc">Pre-registra visitantes para portería ágil.</div></div>
-      <div class="srv-card" onclick="showToast('📋 Reglamento','Reglamento de propiedad horizontal actualizado')"><div class="srv-icon" style="background:var(--teal-pale)">📋</div><div class="srv-name">Reglamento</div><div class="srv-desc">Reglamento y políticas de convivencia actualizadas.</div></div>
+      <div class="srv-card" onclick="location.href='#pqr'"><div class="srv-icon" style="background:#DCFCE7">📦</div><div class="srv-name">Correspondencia</div><div class="srv-desc">>Notificación cuando lleguen paquetes a portería.</div></div>
+      
+      <!-- Cambio aquí: Redirige al apartado de pqr -->
+      <div class="srv-card" onclick="location.href='#pqr'"><div class="srv-icon" style="background:#FEF3C7">🔧</div><div class="srv-name">Mantenimiento</div><div class="srv-desc">Plomería, electricidad y daños en áreas comunes.</div></div>
+      
+      <div class="srv-card" onclick="location.href='#pqr'"><div class="srv-icon" style="background:#FCE7F3">🐾</div><div class="srv-name">Registro Mascotas</div><div class="srv-desc">Registro obligatorio según reglamento P.H.</div></div>
+      <div class="srv-card" onclick="location.href='#pqr'"><div class="srv-icon" style="background:#E0F2FE">🚗</div><div class="srv-name">Ingreso Visitantes</div><div class="srv-desc">Pre-registra visitantes para portería ágil.</div></div>
+      
+      <!-- Cambio aquí: Redirige al apartado drive -->
+     <div class="srv-card" onclick="window.open('https://drive.google.com/file/d/15EN4xGdgjR1UI26pcqWy7iNM_ch74ovX/view?usp=sharing', '_blank')" style="cursor: pointer;">
+        <div class="srv-icon" style="background:var(--teal-pale)">📋</div>
+        <div class="srv-name">Reglamento</div>
+        <div class="srv-desc">Reglamento y políticas de convivencia actualizadas.</div>
+      </div>
+      
       <div class="srv-card na"><div class="srv-icon" style="background:#F3F4F6">🏋️</div><div class="srv-name">Gimnasio</div><div class="srv-desc">Reserva de turno.</div><span class="na-badge">No aplica</span></div>
-      <div class="srv-card" onclick="showToast('📞 Emergencias','Contactos de seguridad y emergencias')"><div class="srv-icon" style="background:#FFF7ED">📞</div><div class="srv-name">Emergencias</div><div class="srv-desc">Seguridad, bomberos y administración 24/7.</div></div>
+      <div class="srv-card" onclick="location.href='#emergencias'"><div class="srv-icon" style="background:#FFF7ED">📞</div><div class="srv-name">Emergencias</div><div class="srv-desc">Seguridad, bomberos y administración 24/7.</div></div>
     </div>
   </div>
 </section>
@@ -876,7 +893,7 @@ footer{background:var(--deep);color:rgba(255,255,255,.62);padding:3rem 2rem 1.5r
 
 <!-- FOOTER -->
 <footer>
-  <div class="footer-grid">
+  <div class="footer-grid" id="emergencias">
     <div>
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:1rem">
         <img src="data:image/jpeg;base64,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" alt="Villa Serena" style="height:48px;border-radius:6px;object-fit:contain;">
@@ -884,7 +901,9 @@ footer{background:var(--deep);color:rgba(255,255,255,.62);padding:3rem 2rem 1.5r
       </div>
       <div class="footer-brand">Villa Serena</div>
       <div class="footer-desc">Portal oficial del Conjunto Residencial Villa Serena, administrado por Asistir 911 — Administración y Soluciones Integrales.</div>
-      <span class="contact-pill">📍 Soledad, Atlántico</span>
+      <a href="https://maps.app.goo.gl/SbEc682SrXaBhftw8" target="_blank" rel="noopener noreferrer">
+  <span class="contact-pill">📍 Cl. 18 #42-213 Soledad, Atlántico</span>
+</a>
     </div>
     <div>
       <div class="footer-col-t">Servicios</div>
@@ -1057,14 +1076,32 @@ footer{background:var(--deep);color:rgba(255,255,255,.62);padding:3rem 2rem 1.5r
           <div class="form-group"><label>Autor / Área</label><input type="text" id="aAutor" placeholder="Ej: Administración"></div>
           <div class="form-group" style="align-items:flex-end"><button class="btn-add" style="width:100%" onclick="addComunicado()">+ Publicar en Muro</button></div>
           <div class="form-group full">
-            <label>Enlace de documento <span style="color:var(--muted);font-weight:400">(opcional — Google Drive, PDF, imagen, etc.)</span></label>
-            <input type="url" id="aDocUrl" placeholder="https://drive.google.com/... o cualquier enlace">
-            <small style="color:var(--muted);font-size:.72rem;margin-top:3px;display:block">💡 Sube el archivo a Google Drive, copia el enlace y pégalo aquí. El residente podrá abrirlo con un clic.</small>
+            <label>Adjunto <span style="color:var(--muted);font-weight:400">(opcional — foto, PDF, Word, Excel · máx. 10 MB)</span></label>
+            <div id="uploadZone" style="border:2px dashed rgba(42,122,107,.35);border-radius:10px;padding:1.25rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--teal-pale);" onclick="document.getElementById('aDocFile').click()" ondragover="event.preventDefault();this.style.borderColor='var(--teal)'" ondrop="handleDropDoc(event)">
+              <input type="file" id="aDocFile" accept="image/*,.pdf,.doc,.docx,.xlsx,.xls,.ppt,.pptx" style="display:none" onchange="previewDocAdmin(event)">
+              <div style="font-size:1.6rem;margin-bottom:.4rem">📎</div>
+              <div style="font-size:.82rem;color:var(--teal-dark);font-weight:600">Arrastra o haz clic para adjuntar</div>
+              <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">Imagen · PDF · Word · Excel · PowerPoint</div>
+            </div>
+            <div id="docAdminPreview" style="display:none;margin-top:.75rem;background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;display:none;align-items:center;gap:.75rem;">
+              <span id="docAdminIcon" style="font-size:1.4rem">📄</span>
+              <div style="flex:1;min-width:0">
+                <div id="docAdminName" style="font-weight:700;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+                <div id="docAdminSize" style="font-size:.72rem;color:var(--muted)"></div>
+              </div>
+              <button onclick="clearDocAdmin()" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:.82rem;font-weight:700;flex-shrink:0">✕ Quitar</button>
+            </div>
+            <div id="uploadProgress" style="display:none;margin-top:.6rem">
+              <div style="height:4px;background:rgba(42,122,107,.15);border-radius:4px;overflow:hidden">
+                <div id="uploadBar" style="height:100%;background:var(--teal);width:0%;transition:width .3s;border-radius:4px"></div>
+              </div>
+              <div id="uploadPct" style="font-size:.72rem;color:var(--teal);margin-top:.3rem;text-align:center">Subiendo...</div>
+            </div>
           </div>
-          <div class="form-group full">
-            <label>Nombre del documento <span style="color:var(--muted);font-weight:400">(opcional)</span></label>
-            <input type="text" id="aDocNombre" placeholder="Ej: Circular_Julio_2026.pdf">
-          </div>
+          <!-- Hidden fields for URL/name after upload -->
+          <input type="hidden" id="aDocUrl">
+          <input type="hidden" id="aDocNombre">
+          <input type="hidden" id="aDocTipo">
         </div>
         <div style="font-weight:700;margin:1.4rem 0 .7rem;font-size:.88rem">Comunicados activos <span id="comCount" style="color:var(--muted);font-weight:400"></span></div>
         <ul class="saved-list" id="comList"></ul>
@@ -1135,17 +1172,24 @@ footer{background:var(--deep);color:rgba(255,255,255,.62);padding:3rem 2rem 1.5r
           Usa una contraseña de mínimo 8 caracteres. No compartas el acceso. Cierra sesión después de cada uso.
         </div>
         <div style="margin-top:1rem;background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:1.1rem;font-size:.8rem;color:#854D0E;line-height:1.8">
-          <strong>📧 Activar envío automático de correos PQR — Formspree</strong><br>
+          <strong>📧 Correos PQR — Formspree activado ✅</strong><br>
           Sigue estos pasos UNA sola vez y los correos llegarán automáticamente:<br><br>
           1. Ve a <strong style="color:#92400E">formspree.io</strong> → crea cuenta gratis con tu Gmail<br>
           2. Clic en <strong>+ New Form</strong> → nombre: <em>PQR Villa Serena</em><br>
           3. Pon el correo destino: <strong>admonvillaserena2022@gmail.com</strong><br>
           4. Copia el ID que aparece en la URL — es algo así: <strong>xpzvwrqk</strong><br>
-          5. Mándale ese ID a Claude y lo activa en 2 minutos.<br><br>
+          5. ¡Ya está activo! ID configurado: <strong>mnpanedg</strong> → admonvillaserena2022@gmail.com<br><br>
           Formspree envía hasta <strong>50 correos gratis al mes</strong>. Sin tarjeta de crédito.
         </div>
         <div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:1rem;margin-top:.75rem;font-size:.79rem;color:#166534;line-height:1.7">
-          ☁️ <strong>Firebase activo</strong> — Todos los cambios se guardan en la nube de Google en tiempo real. Cualquier residente que abra la página verá los comunicados actualizados al instante.
+          ☁️ <strong>Firebase activo</strong> — Todos los cambios se guardan en la nube de Google en tiempo real.<br><br>
+          📎 <strong>Subida de fotos/documentos — Cloudinary activo</strong><br>
+          Para activar, crea el upload preset en Cloudinary (solo una vez):<br>
+          1. Ve a <strong>console.cloudinary.com</strong> → <strong>Settings → Upload</strong><br>
+          2. Baja hasta <strong>"Upload presets"</strong> → clic en <strong>"Add upload preset"</strong><br>
+          3. Preset name: <strong>villa_serena_unsigned</strong><br>
+          4. Signing mode: <strong>Unsigned</strong><br>
+          5. Clic en <strong>Save</strong> — ¡listo! Ya puedes subir fotos y documentos.
         </div>
       </div>
 
@@ -1245,12 +1289,25 @@ function escucharComunicados(){
 async function guardarComunicado(com){
   flashCloud(true);
   try{
-    await db.collection('comunicados').doc(String(com.id)).set({
-      titulo:com.titulo, tipo:com.tipo, cuerpo:com.cuerpo,
-      autor:com.autor, fecha:com.fecha, ts:firebase.firestore.FieldValue.serverTimestamp()
-    });
+    const data = {
+      titulo: com.titulo,
+      tipo:   com.tipo,
+      cuerpo: com.cuerpo,
+      autor:  com.autor,
+      fecha:  com.fecha,
+      ts:     firebase.firestore.FieldValue.serverTimestamp()
+    };
+    // Save doc fields only if they exist
+    if(com.docUrl)  data.docUrl  = com.docUrl;
+    if(com.docName) data.docName = com.docName;
+    if(com.docTipo) data.docTipo = com.docTipo;
+
+    await db.collection('comunicados').doc(String(com.id)).set(data);
     flashCloud(false);
-  } catch(err){ console.error('Error guardando comunicado:',err); showToast('⚠️ Error al guardar','Verifica tu conexión a internet.'); }
+  } catch(err){
+    console.error('Error guardando comunicado:',err);
+    showToast('⚠️ Error al guardar','Verifica tu conexión a internet.');
+  }
 }
 
 // ── Eliminar comunicado de Firebase ──────────────────────────
@@ -1347,47 +1404,143 @@ function renderMuro(){
   const g=document.getElementById('muroGrid');if(!g)return;
   const tm={urg:{cls:'t-urg',lbl:'Urgente',cc:'urg'},inf:{cls:'t-inf',lbl:'Informativo',cc:'inf'},nor:{cls:'t-nor',lbl:'Aviso',cc:'nor'}};
   g.innerHTML=DB.comunicados.map(c=>{
-    const t=tm[c.tipo]||tm.nor;
-    const docChip = c.docUrl
+    const t = tm[c.tipo]||tm.nor;
+    const esImagen = c.docTipo && ['jpg','jpeg','png','gif','webp'].includes(c.docTipo);
+    const imgPreview = (c.docUrl && esImagen)
+      ? `<img src="${c.docUrl}" alt="${c.docName||'Imagen'}" onclick="event.stopPropagation();abrirComModal('${c.id}')"
+           style="width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-top:.75rem;display:block;cursor:zoom-in;">`
+      : '';
+    const docChip = (c.docUrl && !esImagen)
       ? `<a href="${c.docUrl}" target="_blank" rel="noopener" class="com-attachment" onclick="event.stopPropagation()">
            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
            ${c.docName||'Ver documento'}
          </a>`
       : '';
-    const hint = `<div style="font-size:.7rem;color:var(--teal);margin-top:.6rem;font-weight:600;opacity:.8;">👆 Toca para leer completo</div>`;
+    const hint = `<div style="font-size:.7rem;color:var(--teal);margin-top:.55rem;font-weight:600;opacity:.75;">👆 Toca para leer completo</div>`;
     return `<div class="com-card ${t.cc}" onclick="abrirComModal('${c.id}')" style="cursor:pointer;">
       <span class="com-tag ${t.cls}">${t.lbl}</span>
       <div class="com-title">${c.titulo}</div>
-      <div class="com-body">${c.cuerpo.length>140?c.cuerpo.substring(0,140)+'…':c.cuerpo}</div>
+      <div class="com-body">${c.cuerpo.length>120?c.cuerpo.substring(0,120)+'…':c.cuerpo}</div>
+      ${imgPreview}
       ${docChip}
       ${hint}
       <div class="com-date">📅 ${c.fecha} · ${c.autor}</div>
     </div>`;
   }).join('');
 }
+
+// ── Adjunto comunicados — Firebase Storage ─────────────────────────────
+let _docFileAdmin = null;
+
+function handleDropDoc(e){
+  e.preventDefault();
+  document.getElementById('uploadZone').style.borderColor = '';
+  const file = e.dataTransfer.files[0];
+  if(file) procesarDocAdmin(file);
+}
+
+function previewDocAdmin(e){
+  const file = e.target.files[0];
+  if(file) procesarDocAdmin(file);
+}
+
+function procesarDocAdmin(file){
+  if(file.size > 10*1024*1024){ showToast('⚠️ Archivo muy grande','Máximo 10 MB.'); return; }
+  _docFileAdmin = file;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const icons = {jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',webp:'🖼️',
+                 pdf:'📄',doc:'📝',docx:'📝',xls:'📊',xlsx:'📊',ppt:'📊',pptx:'📊'};
+  const prev = document.getElementById('docAdminPreview');
+  document.getElementById('docAdminIcon').textContent = icons[ext]||'📎';
+  document.getElementById('docAdminName').textContent = file.name;
+  document.getElementById('docAdminSize').textContent = (file.size/1024).toFixed(1)+' KB';
+  document.getElementById('aDocTipo').value = ext;
+  if(prev){ prev.style.display='flex'; }
+}
+
+function clearDocAdmin(){
+  _docFileAdmin = null;
+  document.getElementById('aDocFile').value='';
+  document.getElementById('aDocUrl').value='';
+  document.getElementById('aDocNombre').value='';
+  document.getElementById('aDocTipo').value='';
+  const prev = document.getElementById('docAdminPreview');
+  if(prev) prev.style.display='none';
+}
+
+async function subirArchivoStorage(file, comId){
+  return new Promise((resolve, reject)=>{
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_PRESET);
+    formData.append('folder', 'villa_serena');
+
+    document.getElementById('uploadProgress').style.display = 'block';
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', CLOUDINARY_UPLOAD_URL, true);
+
+    xhr.upload.onprogress = (e) => {
+      if(e.lengthComputable){
+        const pct = Math.round(e.loaded / e.total * 100);
+        document.getElementById('uploadBar').style.width = pct + '%';
+        document.getElementById('uploadPct').textContent = 'Subiendo ' + pct + '%...';
+      }
+    };
+
+    xhr.onload = () => {
+      document.getElementById('uploadProgress').style.display = 'none';
+      if(xhr.status === 200){
+        const res = JSON.parse(xhr.responseText);
+        resolve(res.secure_url);
+      } else {
+        try{
+          const err = JSON.parse(xhr.responseText);
+          reject(new Error(err.error?.message || 'Error Cloudinary'));
+        } catch(e){ reject(new Error('Error al subir: ' + xhr.status)); }
+      }
+    };
+
+    xhr.onerror = () => {
+      document.getElementById('uploadProgress').style.display = 'none';
+      reject(new Error('Error de conexión'));
+    };
+
+    xhr.send(formData);
+  });
+}
+
 async function addComunicado(){
   const t     = document.getElementById('aTitulo').value.trim();
   const c     = document.getElementById('aCuerpo').value.trim();
   const tipo  = document.getElementById('aTipo').value;
   const autor = document.getElementById('aAutor').value.trim() || 'Administración';
-  const docUrl   = (document.getElementById('aDocUrl')?.value || '').trim();
-  const docNombre= (document.getElementById('aDocNombre')?.value || '').trim();
 
   if(!t||!c){ showToast('⚠️ Faltan datos','Completa título y contenido.'); return; }
 
+  const btn = document.querySelector('#tabCom .btn-add');
+  if(btn){ btn.textContent='⏳ Publicando...'; btn.disabled=true; }
+
   const now = new Date();
+  const comId = Date.now();
   const com = {
-    id:    Date.now(),
-    titulo: t,
-    tipo,
-    cuerpo: c,
-    autor,
+    id:    comId,
+    titulo: t, tipo, cuerpo: c, autor,
     fecha: now.toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'})
   };
 
-  if(docUrl){
-    com.docUrl  = docUrl;
-    com.docName = docNombre || 'Ver documento';
+  // Upload file to Firebase Storage if selected
+  if(_docFileAdmin){
+    try{
+      showToast('⏳ Subiendo archivo...','Espera un momento.');
+      const url = await subirArchivoStorage(_docFileAdmin, comId);
+      com.docUrl  = url;
+      com.docName = _docFileAdmin.name;
+      com.docTipo = _docFileAdmin.name.split('.').pop().toLowerCase();
+    } catch(err){
+      console.error('Error subiendo archivo:', err);
+      showToast('⚠️ Error al subir archivo','El comunicado se publicará sin adjunto.');
+    }
   }
 
   DB.comunicados.unshift(com);
@@ -1396,11 +1549,13 @@ async function addComunicado(){
   renderAdminComs();
 
   // Clear form
-  ['aTitulo','aCuerpo','aAutor','aDocUrl','aDocNombre'].forEach(id=>{
-    const el = document.getElementById(id); if(el) el.value='';
+  ['aTitulo','aCuerpo','aAutor'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
   });
+  clearDocAdmin();
 
-  showToast('✅ Comunicado publicado', docUrl ? `"${t}" con enlace adjunto ☁️` : `"${t}" guardado en la nube ☁️`);
+  if(btn){ btn.textContent='+ Publicar en Muro'; btn.disabled=false; }
+  showToast('✅ Comunicado publicado', com.docUrl ? `"${t}" con adjunto guardado en Firebase ☁️` : `"${t}" publicado ☁️`);
 }
 function deleteComunicado(id){
   DB.comunicados=DB.comunicados.filter(c=>c.id!==id);
@@ -1680,38 +1835,41 @@ async function enviarPQR(){
   const btn = document.querySelector('#pqr .btn-submit');
   if(btn){ btn.textContent = '⏳ Enviando...'; btn.disabled = true; }
 
-  // ── Intento 1: EmailJS (si está configurado con clave real) ──────
+  // ── Intento 1: Formspree — envío directo a admonvillaserena2022@gmail.com ──
   let enviado = false;
-  if(EMAILJS_PUBLIC_KEY !== 'TU_PUBLIC_KEY'){
+  try{
+    const res = await fetch('https://formspree.io/f/mnpanedg', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Accept':'application/json'},
+      body: JSON.stringify({
+        _replyto:  c,
+        _subject:  `[${tipo}] ${a} — Radicado ${rad}`,
+        Tipo:            tipo,
+        Radicado:        rad,
+        Nombre:          n,
+        'Correo residente': c,
+        Torre:           tor,
+        Apartamento:     ap,
+        Asunto:          a,
+        Descripción:     desc||'(Sin descripción adicional)',
+        Prioridad:       pri,
+        Fecha:           fecha,
+      })
+    });
+    if(res.ok) enviado = true;
+    else console.warn('Formspree respondió:', res.status);
+  } catch(e){ console.warn('Formspree error:', e); }
+
+  // ── Intento 2: EmailJS (si está configurado) ──────────────────────
+  if(!enviado && EMAILJS_PUBLIC_KEY !== 'TU_PUBLIC_KEY'){
     try{
       const params = { tipo, radicado:rad, nombre:n, correo:c, torre:tor,
         apartamento:ap, asunto:a, descripcion:desc||'(Sin descripción)',
         prioridad:pri, fecha, reply_to:c };
       await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_PQR,
         { ...params, to_email:CORREO_ADMIN, to_name:'Administración Villa Serena' });
-      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_PQR,
-        { ...params, to_email:c, to_name:n });
       enviado = true;
     } catch(e){ console.warn('EmailJS falló:', e); }
-  }
-
-  // ── Intento 2: Formspree (funciona sin configuración extra) ──────
-  if(!enviado){
-    try{
-      const res = await fetch('https://formspree.io/f/FORMSPREE_ID', {
-        method:'POST',
-        headers:{'Content-Type':'application/json','Accept':'application/json'},
-        body: JSON.stringify({
-          _replyto: c,
-          _subject: `[${tipo}] ${a} — ${rad}`,
-          tipo, radicado:rad, nombre:n, correo_residente:c,
-          torre:tor, apartamento:ap, asunto:a,
-          descripcion: desc||'(Sin descripción adicional)',
-          prioridad:pri, fecha,
-        })
-      });
-      if(res.ok) enviado = true;
-    } catch(e){ console.warn('Formspree falló:', e); }
   }
 
   // ── Resultado ────────────────────────────────────────────────────
@@ -1856,19 +2014,36 @@ function abrirComModal(comId){
 
   if(com.docUrl){
     docSection.style.display = 'block';
-    docPreview.innerHTML = `<div style="padding:1.25rem;display:flex;align-items:center;gap:1rem;background:var(--teal-pale);border-radius:10px;">
-      <div style="font-size:2.2rem;flex-shrink:0;">📎</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:700;font-size:.9rem;color:var(--deep);margin-bottom:.2rem;">${com.docName||'Documento adjunto'}</div>
-        <div style="font-size:.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${com.docUrl}</div>
-      </div>
-    </div>`;
+    docPreview.innerHTML = '';
+    docActions.innerHTML = '';
+
+    const esImagen = com.docTipo && ['jpg','jpeg','png','gif','webp'].includes(com.docTipo);
+    const esPdf    = com.docTipo === 'pdf';
+
+    if(esImagen){
+      docPreview.innerHTML = `<img src="${com.docUrl}" alt="${com.docName||'Imagen'}"
+        style="width:100%;max-height:460px;object-fit:contain;border-radius:10px;display:block;background:#f5f5f5;">`;
+    } else if(esPdf){
+      docPreview.innerHTML = `<iframe src="${com.docUrl}"
+        style="width:100%;height:420px;border:none;border-radius:10px;"
+        title="${com.docName||'PDF'}"></iframe>`;
+    } else {
+      const icons={doc:'📝',docx:'📝',xls:'📊',xlsx:'📊',ppt:'📊',pptx:'📊'};
+      const icon = icons[com.docTipo||'']||'📎';
+      docPreview.innerHTML = `<div style="padding:2rem;text-align:center;background:var(--cream);border-radius:10px;">
+        <div style="font-size:3rem;margin-bottom:.6rem">${icon}</div>
+        <div style="font-weight:700;font-size:.9rem;color:var(--deep)">${com.docName||'Documento adjunto'}</div>
+      </div>`;
+    }
+
+    const labelBtn = esImagen ? 'Ver imagen completa' : esPdf ? 'Abrir PDF' : 'Descargar documento';
     docActions.innerHTML = `<a href="${com.docUrl}" target="_blank" rel="noopener" class="btn-doc-open">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+        stroke-linecap="round" stroke-linejoin="round">
         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
         <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
       </svg>
-      Abrir documento
+      ${labelBtn}
     </a>`;
   } else {
     docSection.style.display = 'none';
